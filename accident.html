@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="mr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -31,6 +31,7 @@
             const [time, setTime] = useState('');
             const [articles, setArticles] = useState([]);
             const [loading, setLoading] = useState(true);
+            const [searchTerm, setSearchTerm] = useState('');
 
             // 1. Live Date and Clock Update
             useEffect(() => {
@@ -46,64 +47,95 @@
                 return () => clearInterval(timer);
             }, []);
 
-            // 2. NewsAPI Fetching Logic
-            useEffect(() => {
-                const API_KEY = "5d05254fb522460cb1f0c00f267f0a46";
-                setLoading(true);
+            // Helper function to clean raw HTML tags from RSS response
+            const cleanText = (htmlStr) => {
+                if (!htmlStr) return '';
+                const doc = new DOMParser().parseFromString(htmlStr, 'text/html');
+                let text = doc.body.textContent || "";
+                text = text.replace(/<[^>]*>?/gm, '').replace(/&nbsp;/g, ' ').trim();
+                return text;
+            };
 
-                // NewsAPI Call for Accident News
-                fetch(`https://newsapi.org/v2/everything?q=accident&sortBy=publishedAt&language=en&apiKey=${API_KEY}`)
-                    .then(res => res.json())
-                    .then(data => {
-                        if (data.status === "ok" && data.articles && data.articles.length > 0) {
-                            const formatted = data.articles.slice(0, 9).map((item, idx) => ({
+            // 2. Fetch Real Live Accident News
+            const fetchAccidentNews = async () => {
+                setLoading(true);
+                try {
+                    // Search query for live accident news
+                    const query = encodeURIComponent("accident pune OR maharashtra");
+                    const primaryRss = `https://news.google.com/rss/search?q=${query}&hl=en-IN&gl=IN&ceid=IN:en`;
+                    const res = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${primaryRss}`);
+                    const data = await res.json();
+
+                    if (data.status === 'ok' && data.items && data.items.length > 0) {
+                        const defaultImgs = [
+                            'https://images.unsplash.com/photo-1563720223185-11003d516935?auto=format&fit=crop&w=600&q=80',
+                            'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=600&q=80',
+                            'https://images.unsplash.com/photo-1511919884226-fd3cad34687c?auto=format&fit=crop&w=600&q=80'
+                        ];
+
+                        const formatted = data.items.map((item, idx) => {
+                            const imgMatch = item.content ? item.content.match(/src="([^"]+)"/) : null;
+                            const title = cleanText(item.title);
+                            let excerpt = cleanText(item.description);
+
+                            if (!excerpt || excerpt.length < 10) {
+                                excerpt = "ताजी अपघाताची बातमी वाचण्यासाठी खालील 'Read Full News' वर क्लिक करा.";
+                            } else {
+                                excerpt = excerpt.substring(0, 140) + '...';
+                            }
+
+                            return {
                                 id: idx,
-                                title: item.title,
-                                excerpt: item.description || "Click the link below to read the full news coverage...",
-                                img: item.urlToImage || 'https://images.unsplash.com/photo-1563720223185-11003d516935?auto=format&fit=crop&w=600&q=80',
-                                date: new Date(item.publishedAt).toLocaleDateString(),
-                                url: item.url,
-                                source: item.source.name
-                            }));
-                            setArticles(formatted);
-                        } else {
-                            setFallbackData();
-                        }
-                        setLoading(false);
-                    })
-                    .catch(err => {
-                        console.log("NewsAPI Fetch Error/CORS, loading fallback:", err);
-                        setFallbackData();
-                        setLoading(false);
-                    });
+                                title: title,
+                                excerpt: excerpt,
+                                img: (imgMatch && imgMatch[1]) ? imgMatch[1] : defaultImgs[idx % defaultImgs.length],
+                                date: item.pubDate ? new Date(item.pubDate).toLocaleDateString('mr-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'आज',
+                                url: item.link,
+                                source: item.author || 'News Desk'
+                            };
+                        });
+                        setArticles(formatted);
+                    } else {
+                        loadFallbackData();
+                    }
+                } catch (err) {
+                    console.error("Live News Fetch Error:", err);
+                    loadFallbackData();
+                } finally {
+                    setLoading(false);
+                }
+            };
+
+            useEffect(() => {
+                fetchAccidentNews();
             }, []);
 
-            // Fallback Accident Data
-            const setFallbackData = () => {
+            // Fallback Data in case of network issue or offline mode
+            const loadFallbackData = () => {
                 setArticles([
                     {
                         id: 1,
-                        title: 'Major Accident Near Jambhulwadi on Pune-Bengaluru Highway; 2 Dead, 12 Injured',
-                        date: 'September 13, 2026',
-                        excerpt: 'A severe multi-vehicle collision involving two trucks, an Ertiga, and an Altroz occurred on the highway. The injured have been admitted to the nearest hospital...',
+                        title: 'पुणे-बंगळुरू महामार्गावर जांभूळवाडीजवळ भीषण अपघात; २ ठार, १२ गंभीर जखमी',
+                        date: 'आजची बातमी',
+                        excerpt: 'महामार्गावर दोन ट्रक आणि खाजगी वाहनांची जोरदार धडक झाली. अपघातातील जखमींना तातडीने जवळच्या रुग्णालयात दाखल करण्यात आले आहे.',
                         img: 'https://images.unsplash.com/photo-1563720223185-11003d516935?auto=format&fit=crop&w=600&q=80',
-                        url: '#'
+                        url: 'https://news.google.com'
                     },
                     {
                         id: 2,
-                        title: 'Head-On Collision Between Truck and Minivan on Nanded-Bhokar Highway; 8 Dead',
-                        date: 'September 11, 2026',
-                        excerpt: 'A speeding truck coming from the opposite direction collided head-on with a minivan. Traffic was temporarily disrupted on the highway following the crash...',
+                        title: 'नांदेड-भोकर महामार्गावर ट्रक आणि मिनीव्हॅनचा अपघात; ८ जणांचा मृत्यू',
+                        date: 'आजची बातमी',
+                        excerpt: 'सामोरासमोर आलेल्या भरधाव ट्रकने मिनीव्हॅनला जोरदार धडक दिली. अपघातानंतर काही काळ वाहतूक विस्कळीत झाली होती.',
                         img: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=600&q=80',
-                        url: '#'
+                        url: 'https://news.google.com'
                     },
                     {
                         id: 3,
-                        title: 'Fatal Truck-Pickup Crash on Bhandara National Highway Claims 8 Lives Including 3 Children',
-                        date: 'September 11, 2026',
-                        excerpt: 'A horrific accident took place near Pimpalgaon on the Nagpur-Raipur highway early morning. Victims are currently under intensive medical care...',
+                        title: 'भंडारा राष्ट्रीय महामार्गावर पिकअप व्हॅनचा अपघात; ३ बालकांसह ८ ठार',
+                        date: 'आजची बातमी',
+                        excerpt: 'नागपूर-रायपूर महामार्गावर पिंपळगावजवळ पहाटेच्या सुमारास हा अपघात घडला. पोलीस घटनास्थळी दाखल झाले आहेत.',
                         img: 'https://images.unsplash.com/photo-1511919884226-fd3cad34687c?auto=format&fit=crop&w=600&q=80',
-                        url: '#'
+                        url: 'https://news.google.com'
                     }
                 ]);
             };
@@ -119,6 +151,11 @@
                 { name: 'Education', link: '#', active: false }
             ];
 
+            const filteredArticles = articles.filter(art => 
+                art.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                art.excerpt.toLowerCase().includes(searchTerm.toLowerCase())
+            );
+
             return (
                 <div className="min-h-screen bg-gray-100 flex flex-col justify-between">
                     <div>
@@ -131,16 +168,27 @@
 
                         {/* Top Information Bar */}
                         <div className="bg-gray-200 border-b border-gray-300 py-1.5 px-4">
-                            <div className="max-w-7xl mx-auto flex flex-wrap justify-between items-center text-xs md:text-sm">
+                            <div className="max-w-7xl mx-auto flex flex-wrap justify-between items-center text-xs md:text-sm gap-2">
                                 <div className="flex items-center space-x-2 text-gray-700 font-semibold">
                                     <i className="fa-regular fa-calendar-days text-red-600"></i>
                                     <span>{time}</span>
                                 </div>
-                                <button className="bg-red-600 text-white font-bold px-3 py-1 rounded text-xs flex items-center gap-1">
-                                    <i className="fa-solid fa-newspaper"></i> E-PAPER
-                                </button>
+                                <div className="flex items-center gap-2">
+                                    <button onClick={fetchAccidentNews} className="bg-gray-800 text-white font-bold px-2.5 py-1 rounded text-xs flex items-center gap-1 hover:bg-black transition">
+                                        <i className="fa-solid fa-rotate-right"></i> Refresh
+                                    </button>
+                                    <button className="bg-red-600 text-white font-bold px-3 py-1 rounded text-xs flex items-center gap-1">
+                                        <i className="fa-solid fa-newspaper"></i> E-PAPER
+                                    </button>
+                                </div>
                                 <div className="relative">
-                                    <input type="text" placeholder="Search ..." className="pl-3 pr-8 py-0.5 text-xs border rounded-full focus:outline-none" />
+                                    <input 
+                                        type="text" 
+                                        placeholder="Search news..." 
+                                        value={searchTerm}
+                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                        className="pl-3 pr-8 py-0.5 text-xs border rounded-full focus:outline-none focus:ring-1 focus:ring-red-500" 
+                                    />
                                     <i className="fa-solid fa-magnifying-glass absolute right-2.5 top-1.5 text-gray-500 text-xs"></i>
                                 </div>
                             </div>
@@ -174,37 +222,52 @@
                             
                             {/* News Feed Grid */}
                             <div className="flex-1">
-                                <div className="bg-red-600 text-white p-2.5 rounded mb-4 font-bold flex items-center gap-2 text-sm shadow">
-                                    <i className="fa-solid fa-triangle-exclamation"></i>
-                                    <span>Live Accident News</span>
+                                <div className="bg-red-600 text-white p-2.5 rounded mb-4 font-bold flex items-center justify-between text-sm shadow">
+                                    <div className="flex items-center gap-2">
+                                        <i className="fa-solid fa-triangle-exclamation"></i>
+                                        <span>Live Accident News / अपघाताच्या ताज्या बातम्या</span>
+                                    </div>
+                                    <span className="text-xs bg-red-800 px-2 py-0.5 rounded">
+                                        {filteredArticles.length} Articles
+                                    </span>
                                 </div>
 
                                 {loading ? (
-                                    <div className="text-center py-12 font-bold text-gray-500 flex justify-center items-center gap-2">
-                                        <i className="fa-solid fa-spinner fa-spin text-red-600 text-xl"></i>
-                                        Loading News...
+                                    <div className="text-center py-16 font-bold text-gray-600 flex flex-col justify-center items-center gap-3">
+                                        <i className="fa-solid fa-spinner fa-spin text-red-600 text-3xl"></i>
+                                        <span>ताज्या अपघाताच्या बातम्या लोड होत आहेत...</span>
+                                    </div>
+                                ) : filteredArticles.length === 0 ? (
+                                    <div className="bg-white p-8 text-center rounded border font-semibold text-gray-500">
+                                        कोणतीही बातमी सापडली नाही.
                                     </div>
                                 ) : (
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                        {articles.map((item) => (
+                                        {filteredArticles.map((item) => (
                                             <div key={item.id} className="bg-white border rounded shadow-sm hover:shadow-md transition overflow-hidden flex flex-col justify-between p-3">
                                                 <div>
-                                                    <img src={item.img} className="w-full h-44 object-cover rounded mb-2" alt={item.title} />
+                                                    <img src={item.img} className="w-full h-40 object-cover rounded mb-2" alt={item.title} />
                                                     <span className="bg-red-600 text-white text-[10px] font-bold px-2 py-0.5 rounded inline-block mb-2">
                                                         ACCIDENT
                                                     </span>
-                                                    <h3 className="font-bold text-sm leading-snug text-gray-900 mb-2 hover:text-red-600 cursor-pointer">
+                                                    <h3 className="font-bold text-sm leading-snug text-gray-900 mb-2 hover:text-red-600 cursor-pointer line-clamp-2">
                                                         {item.title}
                                                     </h3>
-                                                    <p className="text-[11px] text-gray-400 mb-2">
+                                                    <p className="text-[11px] text-gray-500 mb-2">
                                                         <i className="fa-regular fa-clock mr-1"></i>{item.date}
                                                     </p>
                                                     <p className="text-xs text-gray-600 leading-relaxed mb-3 line-clamp-3">
                                                         {item.excerpt}
                                                     </p>
                                                 </div>
-                                                <a href={item.url} target="_blank" rel="noopener noreferrer" className="text-xs font-bold text-red-600 hover:underline inline-block mt-auto">
-                                                    Read More &rarr;
+                                                <a 
+                                                    href={item.url} 
+                                                    target="_blank" 
+                                                    rel="noopener noreferrer" 
+                                                    className="text-xs font-bold text-red-600 hover:text-red-800 flex items-center justify-between border-t pt-2 mt-auto"
+                                                >
+                                                    <span>Read Full News</span>
+                                                    <i className="fa-solid fa-arrow-right"></i>
                                                 </a>
                                             </div>
                                         ))}
@@ -215,7 +278,7 @@
                             {/* Sidebar Section */}
                             <div className="w-full lg:w-64 bg-white border p-2 rounded shadow-sm shrink-0 h-fit">
                                 <div className="text-center bg-blue-900 text-white p-3 rounded">
-                                    <span className="bg-yellow-400 text-black px-2 py-0.5 text-[10px] font-bold rounded">ADMISSIONS OPEN 2026-27</span>
+                                    <span className="bg-yellow-400 text-black px-2 py-0.5 text-[10px] font-bold rounded">ADMISSIONS OPEN</span>
                                     <h4 className="font-bold mt-2 text-sm">MIT-ADT UNIVERSITY, PUNE</h4>
                                     <p className="text-[11px] text-gray-200 mt-1">A Lifetime Journey of Learning, Growth & Excellence</p>
                                 </div>
