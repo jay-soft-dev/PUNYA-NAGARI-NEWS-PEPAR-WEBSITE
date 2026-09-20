@@ -31,122 +31,186 @@
         const { useState, useEffect } = React;
 
         const PunyanagariPortal = () => {
-            // State management
-            const [time, setTime] = useState('');
-            const [activeCategory, setActiveCategory] = useState('Accidents');
-            const [searchQuery, setSearchQuery] = useState('');
-            const [selectedArticle, setSelectedArticle] = useState(null);
+            // Language State Selection ('mr' or 'en')
+            const [language, setLanguage] = useState('mr');
+            const [currentTime, setCurrentTime] = useState('');
+            const [selectedCategory, setSelectedCategory] = useState('All');
+            const [searchKeyword, setSearchKeyword] = useState('');
+            const [activeArticle, setActiveArticle] = useState(null);
 
-            // Real-time clock timer
+            // Digital Clock Effect
             useEffect(() => {
-                const updateTime = () => {
+                const updateClock = () => {
                     const now = new Date();
                     const options = { year: 'numeric', month: 'long', day: 'numeric' };
-                    const dateStr = now.toLocaleDateString('en-US', options);
-                    const timeStr = now.toLocaleTimeString('en-US', { hour12: true });
-                    setTime(`${dateStr} at ${timeStr}`);
+                    const dateString = now.toLocaleDateString(language === 'mr' ? 'mr-IN' : 'en-US', options);
+                    const timeString = now.toLocaleTimeString(language === 'mr' ? 'mr-IN' : 'en-US', { hour12: true });
+                    setCurrentTime(`${dateString} - ${timeString}`);
                 };
-                updateTime();
-                const timer = setInterval(updateTime, 1000);
-                return () => clearInterval(timer);
-            }, []);
+                updateClock();
+                const timerId = setInterval(updateClock, 1000);
+                return () => clearInterval(timerId);
+            }, [language]);
 
-            // Navigation categories
-            const categories = [
-                'Accidents', 'Agriculture', 'Crime', 
-                'Finance', 'Education','Politics', 'Government'
+            // Dictionary for Interface UI Text
+            const translations = {
+                mr: {
+                    portalName: "पुण्य नगरी न्यूज पोर्टल",
+                    admissionsText: "प्रवेश सुरू २०२६-२७",
+                    searchPlaceholder: "बातम्या शोधा...",
+                    showingCountText: "दर्शविलेल्या बातम्या",
+                    noArticlesFound: "या श्रेणीसाठी कोणतीही बातमी आढळली नाही.",
+                    readMoreBtn: "सविस्तर वाचा",
+                    allCategory: "सर्व",
+                    footerCopyright: "सर्व हक्क सुरक्षित © २०२६ दैनिक पुण्य नगरी"
+                },
+                en: {
+                    portalName: "Punya Nagari News Portal",
+                    admissionsText: "ADMISSIONS OPEN 2026-27",
+                    searchPlaceholder: "Search news...",
+                    showingCountText: "Showing articles",
+                    noArticlesFound: "No news articles found for this category.",
+                    readMoreBtn: "Read More",
+                    allCategory: "All",
+                    footerCopyright: "All Rights Reserved © 2026 Daily Punya Nagari"
+                }
+            };
+
+            // Category Dictionary
+            const categoryList = [
+                { id: 'Accidents', text: { mr: 'अपघात', en: 'Accidents' } },
+                { id: 'Agriculture', text: { mr: 'कृषी', en: 'Agriculture' } },
+                { id: 'Finance', text: { mr: 'अर्थजगत', en: 'Finance' } },
+                { id: 'Crime', text: { mr: 'गुन्हेगारी', en: 'Crime' } },
+                { id: 'Education', text: { mr: 'शिक्षण', en: 'Education' } },
+                { id: 'Sports', text: { mr: 'क्रीडा', en: 'Sports' } }
             ];
 
-            // Comprehensive news database
-            const newsData = [
+            // News Feed Data
+            const articlesList = [
                 {
                     id: 1,
                     category: 'Accidents',
-                    tags: ['Accident', 'Highway'],
-                    img1: 'https://images.unsplash.com/photo-1563720223185-11003d516935?auto=format&fit=crop&w=400&q=80',
-                    img2: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=400&q=80',
-                    title: "Fatal Collision Between Private Bus and Truck on Mumbai-Pune Expressway",
-                    date: "September 17, 2026",
-                    excerpt: "At least 4 injured as a speeding luxury bus crashed into a stationary freight truck near Khalapur toll plaza early Tuesday morning...",
-                    fullText: "A major collision took place on the Mumbai-Pune Expressway early Tuesday morning when a private luxury bus rammed into a stationary freight truck near the Khalapur toll plaza. Emergency medical services and expressway patrol rushed to the scene immediately. Four individuals sustained moderate injuries and were admitted to the local municipal hospital."
+                    tags: { mr: ['अपघात', 'महामार्ग'], en: ['Accident', 'Highway'] },
+                    imagePrimary: 'https://images.unsplash.com/photo-1563720223185-11003d516935?auto=format&fit=crop&w=400&q=80',
+                    imageSecondary: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=400&q=80',
+                    headline: {
+                        mr: "मुंबई-पुणे एक्सप्रेसवेवर ट्रॅव्हल्स आणि ट्रकचा भीषण अपघात",
+                        en: "Fatal Collision Between Private Bus and Truck on Mumbai-Pune Expressway"
+                    },
+                    publishedDate: "17 September 2026",
+                    summary: {
+                        mr: "खालापूर टोल नाक्याजवळ लक्झरी बस उभ्या असलेल्या ट्रकला धडकल्याने ४ प्रवासी गंभीर जखमी...",
+                        en: "At least 4 injured as a speeding luxury bus crashed into a stationary freight truck near Khalapur toll plaza..."
+                    },
+                    details: {
+                        mr: "मुंबई-पुणे एक्सप्रेसवेवर खालापूर टोल नाक्याजवळ आज पहाटे खाजगी लक्झरी बस आणि ट्रकचा भीषण अपघात झाला. यामध्ये ४ प्रवासी गंभीर जखमी झाले असून त्यांना जवळच्या रुग्णालयात दाखल करण्यात आले आहे.",
+                        en: "A major collision took place on the Mumbai-Pune Expressway early Tuesday morning when a private luxury bus rammed into a stationary freight truck near the Khalapur toll plaza. Emergency response teams rushed to the scene immediately."
+                    }
                 },
                 {
                     id: 2,
                     category: 'Agriculture',
-                    tags: ['Agri', 'Monsoon'],
-                    img1: 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=400&q=80',
-                    img2: 'https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&w=400&q=80',
-                    title: "Rabi Crop Yield Projections Rise Following Extended Monsoon Spells",
-                    date: "September 17, 2026",
-                    excerpt: "Agricultural experts predict favorable soil moisture retention benefits upcoming sowing cycles across Maharashtra.",
-                    fullText: "Recent seasonal rains have significantly recharged groundwater reserves and improved soil moisture, offering highly optimistic forecasts for upcoming Rabi crop sowing across regional agricultural belts."
+                    tags: { mr: ['शेती', 'हवामान'], en: ['Agri', 'Weather'] },
+                    imagePrimary: 'https://images.unsplash.com/photo-1530587191325-3db32d826c18?auto=format&fit=crop&w=400&q=80',
+                    imageSecondary: 'https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&w=400&q=80',
+                    headline: {
+                        mr: "रब्बी हंगामासाठी जमिनीत पुरेसा ओलावा; उत्पादनात वाढीचा अंदाज",
+                        en: "Rabi Crop Yield Projections Rise Following Extended Monsoon Spells"
+                    },
+                    publishedDate: "17 September 2026",
+                    summary: {
+                        mr: "परतीच्या पावसामुळे राज्यातील भूजल पातळीत वाढ, शेतकऱ्यांमध्ये आनंदाचे वातावरण...",
+                        en: "Agricultural experts predict favorable soil moisture retention benefits upcoming sowing cycles across Maharashtra..."
+                    },
+                    details: {
+                        mr: "परतीच्या पावसामुळे राज्यातील जलसाठ्यांमध्ये मोठी वाढ झाली आहे. त्यामुळे आगामी रब्बी हंगामातील पेरण्यांसाठी अनुकूल परिस्थिती निर्माण झाली असून कृषी तज्ज्ञांनी चांगल्या उत्पादनाचा अंदाज व्यक्त केला आहे.",
+                        en: "Recent seasonal rains have significantly recharged groundwater reserves and improved soil moisture, offering highly optimistic forecasts for upcoming Rabi crop sowing across various districts."
+                    }
                 },
                 {
                     id: 3,
-                    category: 'Agriculture',
-                    tags: ['Agri', 'Weather'],
-                    img1: 'https://images.unsplash.com/photo-1530587191325-3db32d826c18?auto=format&fit=crop&w=400&q=80',
-                    img2: 'https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&w=400&q=80',
-                    title: "महाराष्ट्रात अवकाळी पावसामुळे पिकांचे नुकसान; पंचनाम्याचे आदेश",
-                    date: "September 17, 2026",
-                    excerpt: "राज्य शासनाकडून नुकसानग्रस्त भागातील शेतीची पाहणीचे तातडीने निर्देश देण्यात आले आहेत.",
-                    fullText: "राज्यातील काही भागात झालेल्या अवकाळी पावसामुळे शेतीपिकांचे मोठे नुकसान झाले आहे. कृषी विभागाने सर्व प्रभावित शेतकऱ्यांच्या पिकांचे तातडीने पंचनामे करण्याचे आदेश दिले आहेत."
-                },
-                {
-                    id: 4,
                     category: 'Finance',
-                    tags: ['Finance', 'Market'],
-                    img1: 'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?auto=format&fit=crop&w=400&q=80',
-                    img2: 'https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?auto=format&fit=crop&w=400&q=80',
-                    title: "Sensex Rebounds by 400 Points Driven by Banking and IT Gains",
-                    date: "September 17, 2026",
-                    excerpt: "Indian equity benchmarks staged a strong recovery today, buoyed by heavy buying in financial and technology stocks...",
-                    fullText: "The Indian stock market showed strong resilience today as the BSE Sensex surged over 400 points. Banking and IT stocks led the rally following positive global signals and strong domestic institutional buying."
-                },
-                {
-                    id: 5,
-                    category: 'Crime',
-                    tags: ['Crime', 'Cyber'],
-                    img1: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=400&q=80',
-                    img2: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=400&q=80',
-                    title: "Cyber Cell Bypasses Online Scam Operation Network in Metro City",
-                    date: "September 17, 2026",
-                    excerpt: "Police apprehend key operatives running unauthorized financial phish schemes targeting senior citizens...",
-                    fullText: "Cyber Cell units neutralized an illegal network exploiting citizens through unauthorized banking links. Investigations revealed complex digital routes used to funnel illegitimate transactions across state borders."
+                    tags: { mr: ['शेअर बाजार', 'अर्थव्यवस्था'], en: ['Finance', 'Market'] },
+                    imagePrimary: 'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?auto=format&fit=crop&w=400&q=80',
+                    imageSecondary: 'https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?auto=format&fit=crop&w=400&q=80',
+                    headline: {
+                        mr: "शेअर बाजारात मोठी उसळी; सेन्सेक्स ४०० अंकांनी वधारला",
+                        en: "Sensex Rebounds by 400 Points Driven by Banking and IT Gains"
+                    },
+                    publishedDate: "17 September 2026",
+                    summary: {
+                        mr: "बँकिंग आणि आयटी शेअर्समध्ये जोरदार खरेदीमुळे भारतीय शेअर बाजारात तेजी...",
+                        en: "Indian equity benchmarks staged a strong recovery today, buoyed by heavy buying in financial and technology stocks..."
+                    },
+                    details: {
+                        mr: "जागतिक बाजारातील सकारात्मक संकेतांमुळे आज भारतीय शेअर बाजारात मोठी तेजी पाहायला मिळाली. बँकिंग आणि आयटी क्षेत्रातील शेअर्सच्या खरेदीमुळे सेन्सेक्स ४०० पेक्षा जास्त अंकांनी वाढला.",
+                        en: "The Indian stock market showed strong resilience today as the BSE Sensex surged over 400 points. Banking and IT stocks led the rally following positive global signals."
+                    }
                 }
             ];
 
-            // Filter news based on selected category and search input
-            const filteredNews = newsData.filter(item => {
-                const matchesCategory = activeCategory === 'All' || item.category === activeCategory;
-                const matchesSearch = item.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                                      item.excerpt.toLowerCase().includes(searchQuery.toLowerCase());
-                return matchesCategory && matchesSearch;
+            // Current active language UI text
+            const currentUI = translations[language];
+
+            // Filter logic for category & search keyword
+            const filteredArticles = articlesList.filter(article => {
+                const isCategoryMatched = selectedCategory === 'All' || article.category === selectedCategory;
+                const articleTitle = article.headline[language].toLowerCase();
+                const articleSummary = article.summary[language].toLowerCase();
+                const isSearchMatched = articleTitle.includes(searchKeyword.toLowerCase()) || 
+                                        articleSummary.includes(searchKeyword.toLowerCase());
+                return isCategoryMatched && isSearchMatched;
             });
 
             return (
                 <div className="min-h-screen bg-gray-100 flex flex-col justify-between">
                     <div>
-                        {/* Top Banner */}
+                        {/* Top Utility Border / Header with Language Switcher */}
+                        <div className="bg-gray-800 text-white text-xs py-1.5 px-4 border-b border-gray-700">
+                            <div className="max-w-7xl mx-auto flex justify-between items-center">
+                                <div className="flex items-center gap-3">
+                                    <span className="font-semibold"><i className="fa-regular fa-clock mr-1"></i>{currentTime}</span>
+                                </div>
+                                
+                                {/* Language Switcher Dropdown on Top Right */}
+                                <div className="flex items-center space-x-3">
+                                    <div className="text-gray-300 font-bold text-xs hidden md:block">
+                                        <i className="fa-solid fa-newspaper mr-1"></i>{currentUI.portalName}
+                                    </div>
+                                    <div className="flex items-center bg-gray-700 px-2 py-0.5 rounded border border-gray-600">
+                                        <i className="fa-solid fa-globe text-yellow-400 mr-1.5 text-xs"></i>
+                                        <select 
+                                            value={language} 
+                                            onChange={(e) => setLanguage(e.target.value)}
+                                            className="bg-transparent text-white text-xs font-bold focus:outline-none cursor-pointer">
+                                            <option value="mr" className="bg-gray-800 text-white">मराठी</option>
+                                            <option value="en" className="bg-gray-800 text-white">English</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Top Banner Advertisement */}
                         <div className="max-w-7xl mx-auto my-2 px-2">
                             <div className="bg-blue-900 text-white rounded p-3 flex items-center justify-between text-xs md:text-sm shadow">
                                 <div className="flex items-center space-x-3">
                                     <span className="bg-red-600 px-2 py-1 font-bold rounded">MIT-ADT UNIVERSITY</span>
                                     <div>
                                         <h4 className="font-bold">MIT Art, Design & Technology University, Pune</h4>
-                                        <p className="hidden md:block">Studying at MIT-ADT University, A Lifetime Journey of Learning & Excellence...!</p>
                                     </div>
                                 </div>
                                 <div className="bg-yellow-400 text-black px-3 py-1 font-bold rounded shrink-0">
-                                    ADMISSIONS OPEN 2026-27
+                                    {currentUI.admissionsText}
                                 </div>
                             </div>
                         </div>
 
-                        {/* Primary Header */}
+                        {/* Main Header Brand Logo */}
                         <div className="bg-punya-red py-4 shadow-md">
                             <div className="max-w-7xl mx-auto flex justify-center items-center">
-                                <div className="text-center text-white cursor-pointer" onClick={() => setActiveCategory('All')}>
+                                <div className="text-center text-white cursor-pointer" onClick={() => setSelectedCategory('All')}>
                                     <h1 className="text-5xl md:text-6xl font-extrabold tracking-wider border-b-2 border-white pb-1 inline-block uppercase">
                                         Punya<span className="text-yellow-300">॥</span>Nagari
                                     </h1>
@@ -154,129 +218,120 @@
                             </div>
                         </div>
 
-                        {/* Information Ribbon */}
+                        {/* Search Toolbar Ribbon */}
                         <div className="bg-gray-200 border-b border-gray-300 py-2">
-                            <div className="max-w-7xl mx-auto px-4 flex flex-wrap justify-between items-center text-sm gap-2">
-                                <div className="flex items-center space-x-2 text-gray-700 font-semibold">
-                                    <i className="fa-regular fa-calendar-days text-red-600"></i>
-                                    <span>{time || 'September 17, 2026'}</span>
-                                </div>
-
-                                <div className="relative">
+                            <div className="max-w-7xl mx-auto px-4 flex justify-end items-center">
+                                <div className="relative w-full md:w-64">
                                     <input 
                                         type="text" 
-                                        value={searchQuery}
-                                        onChange={(e) => setSearchQuery(e.target.value)}
-                                        placeholder="Search news..." 
-                                        className="pl-3 pr-8 py-1 text-sm border border-gray-400 rounded-full focus:outline-none focus:ring-1 focus:ring-red-600"
+                                        value={searchKeyword}
+                                        onChange={(e) => setSearchKeyword(e.target.value)}
+                                        placeholder={currentUI.searchPlaceholder} 
+                                        className="w-full pl-3 pr-8 py-1 text-sm border border-gray-400 rounded-full focus:outline-none focus:ring-1 focus:ring-red-600"
                                     />
                                     <i className="fa-solid fa-magnifying-glass absolute right-3 top-2.5 text-gray-500 text-xs"></i>
                                 </div>
                             </div>
                         </div>
 
-                        {/* Main Navigation Bar */}
+                        {/* Category Navigation Bar */}
                         <nav className="bg-white border-b border-gray-300 shadow-sm sticky top-0 z-40">
                             <div className="max-w-7xl mx-auto px-2 flex items-center overflow-x-auto whitespace-nowrap text-xs md:text-sm font-semibold py-2">
                                 <button 
-                                    onClick={() => setActiveCategory('All')} 
-                                    className={`p-2 rounded-md mr-2 flex items-center justify-center transition ${activeCategory === 'All' ? 'bg-red-600 text-white' : 'bg-gray-200 text-gray-800'}`}>
-                                    <i className="fa-solid fa-house"></i>
+                                    onClick={() => setSelectedCategory('All')} 
+                                    className={`px-3 py-1 font-bold rounded mr-1 transition ${selectedCategory === 'All' ? 'bg-red-600 text-white' : 'text-gray-800 hover:bg-gray-100'}`}>
+                                    {currentUI.allCategory}
                                 </button>
 
-                                {categories.map((cat, idx) => (
+                                {categoryList.map((cat) => (
                                     <button 
-                                        key={idx} 
-                                        onClick={() => setActiveCategory(cat)}
-                                        className={`px-3 py-1 font-bold rounded transition mr-1 ${activeCategory === cat ? 'bg-red-600 text-white' : 'text-gray-800 hover:text-red-600 hover:bg-gray-100'}`}>
-                                        {cat}
+                                        key={cat.id} 
+                                        onClick={() => setSelectedCategory(cat.id)}
+                                        className={`px-3 py-1 font-bold rounded transition mr-1 ${selectedCategory === cat.id ? 'bg-red-600 text-white' : 'text-gray-800 hover:text-red-600 hover:bg-gray-100'}`}>
+                                        {cat.text[language]}
                                     </button>
                                 ))}
                             </div>
                         </nav>
 
-                        {/* News Grid Layout */}
-                        <div className="max-w-7xl mx-auto px-2 py-4 flex flex-col lg:flex-row gap-4">
-                            <div className="flex-1">
-                                <div className="bg-red-600 text-white p-2 rounded mb-4 font-bold flex items-center justify-between text-sm shadow">
-                                    <span>{activeCategory} News / बातम्या</span>
-                                    <span className="text-xs font-normal">Showing {filteredNews.length} articles</span>
-                                </div>
-
-                                {filteredNews.length === 0 ? (
-                                    <div className="bg-white p-8 text-center border rounded text-gray-500">
-                                        No news articles found for this category.
-                                    </div>
-                                ) : (
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                        {filteredNews.map((item) => (
-                                            <div 
-                                                key={item.id} 
-                                                onClick={() => setSelectedArticle(item)}
-                                                className="bg-white p-3 border rounded shadow-sm hover:shadow-md transition flex flex-col justify-between cursor-pointer">
-                                                <div>
-                                                    <div className="flex gap-1 mb-2 flex-wrap">
-                                                        {item.tags.map((tag, i) => (
-                                                            <span key={i} className="bg-red-600 text-white text-[10px] font-bold px-2 py-0.5 rounded">
-                                                                {tag}
-                                                            </span>
-                                                        ))}
-                                                    </div>
-                                                    <div className="grid grid-cols-2 gap-1 mb-2">
-                                                        <img src={item.img1} className="w-full h-28 object-cover rounded" alt="News Image 1" />
-                                                        <img src={item.img2} className="w-full h-28 object-cover rounded" alt="News Image 2" />
-                                                    </div>
-                                                    <h3 className="font-bold text-sm leading-snug mb-2 hover:text-red-600">
-                                                        {item.title}
-                                                    </h3>
-                                                    <p className="text-xs text-gray-500 mb-2">
-                                                        <i className="fa-regular fa-clock mr-1"></i>{item.date}
-                                                    </p>
-                                                    <p className="text-xs text-gray-700 leading-relaxed mb-3">
-                                                        {item.excerpt}
-                                                    </p>
-                                                </div>
-                                                <button className="text-xs text-red-600 font-bold hover:underline text-left inline-flex items-center gap-1">
-                                                    Read More <i className="fa-solid fa-arrow-right text-[10px]"></i>
-                                                </button>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
+                        {/* News Feed Grid */}
+                        <div className="max-w-7xl mx-auto px-2 py-4">
+                            <div className="bg-red-600 text-white p-2 rounded mb-4 font-bold flex items-center justify-between text-sm shadow">
+                                <span>
+                                    {selectedCategory === 'All' 
+                                        ? currentUI.allCategory 
+                                        : categoryList.find(c => c.id === selectedCategory)?.text[language]}
+                                </span>
+                                <span className="text-xs font-normal">{currentUI.showingCountText}: {filteredArticles.length}</span>
                             </div>
+
+                            {filteredArticles.length === 0 ? (
+                                <div className="bg-white p-8 text-center border rounded text-gray-500">
+                                    {currentUI.noArticlesFound}
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    {filteredArticles.map((article) => (
+                                        <div 
+                                            key={article.id} 
+                                            onClick={() => setActiveArticle(article)}
+                                            className="bg-white p-3 border rounded shadow-sm hover:shadow-md transition flex flex-col justify-between cursor-pointer">
+                                            <div>
+                                                <div className="flex gap-1 mb-2 flex-wrap">
+                                                    {article.tags[language].map((tagItem, idx) => (
+                                                        <span key={idx} className="bg-red-600 text-white text-[10px] font-bold px-2 py-0.5 rounded">
+                                                            {tagItem}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                                <div className="grid grid-cols-2 gap-1 mb-2">
+                                                    <img src={article.imagePrimary} className="w-full h-28 object-cover rounded" alt="News Image 1" />
+                                                    <img src={article.imageSecondary} className="w-full h-28 object-cover rounded" alt="News Image 2" />
+                                                </div>
+                                                <h3 className="font-bold text-sm leading-snug mb-2 hover:text-red-600">
+                                                    {article.headline[language]}
+                                                </h3>
+                                                <p className="text-xs text-gray-500 mb-2">
+                                                    <i className="fa-regular fa-clock mr-1"></i>{article.publishedDate}
+                                                </p>
+                                                <p className="text-xs text-gray-700 leading-relaxed mb-3">
+                                                    {article.summary[language]}
+                                                </p>
+                                            </div>
+                                            <button className="text-xs text-red-600 font-bold hover:underline text-left inline-flex items-center gap-1">
+                                                {currentUI.readMoreBtn} <i className="fa-solid fa-arrow-right text-[10px]"></i>
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                         </div>
                     </div>
 
                     {/* Article Details Modal */}
-                    {selectedArticle && (
+                    {activeArticle && (
                         <div className="fixed inset-0 bg-black/60 z-50 flex justify-center items-center p-4">
                             <div className="bg-white rounded-lg max-w-xl w-full p-6 relative max-h-[90vh] overflow-y-auto shadow-2xl">
                                 <button 
-                                    onClick={() => setSelectedArticle(null)}
+                                    onClick={() => setActiveArticle(null)}
                                     className="absolute top-3 right-3 text-gray-500 hover:text-black text-2xl font-bold">
                                     &times;
                                 </button>
-                                <span className="bg-red-600 text-white text-[10px] font-bold px-2 py-0.5 rounded">
-                                    {selectedArticle.category}
-                                </span>
-                                <h2 className="text-xl font-bold my-2">{selectedArticle.title}</h2>
+                                <h2 className="text-xl font-bold my-2">{activeArticle.headline[language]}</h2>
                                 <p className="text-xs text-gray-500 mb-4">
-                                    <i className="fa-regular fa-clock mr-1"></i>{selectedArticle.date}
+                                    <i className="fa-regular fa-clock mr-1"></i>{activeArticle.publishedDate}
                                 </p>
-                                <img src={selectedArticle.img1} className="w-full h-56 object-cover rounded mb-4" alt="News detail" />
-                                <p className="text-sm text-gray-800 leading-relaxed font-normal">
-                                    {selectedArticle.fullText}
+                                <img src={articleImagePrimary} className="w-full h-56 object-cover rounded mb-4" alt="News detail" />
+                                <p className="text-sm text-gray-800 leading-relaxed">
+                                    {activeArticle.details[language]}
                                 </p>
                             </div>
                         </div>
                     )}
 
-                    {/* Footer */}
-                    <footer className="bg-gray-900 text-white py-6 text-xs border-t-4 border-red-600">
-                        <div className="max-w-7xl mx-auto px-4 text-center">
-                            <p className="text-sm font-bold text-red-500 mb-2">Punya Nagari ePaper & News Channel</p>
-                            <p className="text-gray-400">All Rights Reserved © 2026 Daily Punya Nagari</p>
-                        </div>
+                    {/* Page Footer */}
+                    <footer className="bg-gray-900 text-white py-4 text-xs border-t-4 border-red-600 text-center">
+                        <p className="text-gray-400">{currentUI.footerCopyright}</p>
                     </footer>
                 </div>
             );
